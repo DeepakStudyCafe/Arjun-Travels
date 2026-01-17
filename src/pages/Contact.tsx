@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Layout } from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 const contactInfo = [
   {
@@ -54,6 +55,7 @@ export default function Contact() {
     service: "",
     message: "",
   });
+  const [result, setResult] = useState("");
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -62,23 +64,21 @@ export default function Contact() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsSubmitting(true);
+    const formDataObj = new FormData(event.target as HTMLFormElement);
+    formDataObj.append("access_key", "d5f4c25f-1298-40f5-9317-d5c35967eee2");
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Message Sent!",
-      description: "We'll get back to you within 24 hours.",
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      body: formDataObj
     });
 
-    // Reset form after delay
-    setTimeout(() => {
-      setIsSubmitted(false);
+    const data = await response.json();
+    setIsSubmitting(false);
+    if (data.success) {
+      setIsSubmitted(true);
       setFormData({
         name: "",
         email: "",
@@ -87,7 +87,12 @@ export default function Contact() {
         service: "",
         message: "",
       });
-    }, 3000);
+      setTimeout(() => {
+        setIsSubmitted(false);
+      }, 3000);
+    } else {
+      setResult("Error");
+    }
   };
 
   return (
@@ -188,7 +193,7 @@ export default function Contact() {
                     </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={onSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label
